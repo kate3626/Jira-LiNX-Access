@@ -117,7 +117,6 @@ if __name__ == "__main__":
     args = parser.parse_args()     
     x.__dic__()
     x.versionDoneSort()
-    print(x.main_dict)
     with open(file_name, 'r') as cat:
         big_dict = json.load(cat)    
     date = time.strftime("%Y/%m/%d")
