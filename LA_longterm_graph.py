@@ -109,4 +109,4 @@ for component in components:
     ax2.yaxis.grid()
     plt.subplots_adjust(left=0.05, bottom=0.2)
     pp.savefig()
-    plt.show()
+pp.close()
