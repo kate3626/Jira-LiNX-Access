@@ -18,37 +18,38 @@ jira = JIRA(server="http://jiraprod1.au.ivc")
 class Info(object):
     def __init__(self):
         self.main_dict = {}
-        self.versions = []
-        self.components = []
+        self.component_versions = {}
         self.version_sort = {}
         self.done = {}
+        self.components = []
         
-    def set_version(self):
-        self.versions = ['3.0', '3.0.1', '3.1']
-    
-    def set_components(self):
+    def set_component_versions(self):
+        self.component_versions = {'PC': ['3.0', '3.0.1', '3.1'],
+                                   'iOS': ['3.0', '3.0.1', '3.1']}
+    def set_component(self):
         self.components = ['PC', 'iOS']
     
     def __dic__(self):
         """ Gets a dictionary of the wanted epics and the stories that are linked to them. """
         self.main_dict = {}
-        e = set()
         everything = jira.search_issues('project="LiNX Access" and type="Story"', maxResults = 800)
         stories = set()
         for issue in everything:
             stories.add(issue.key)
         for component in self.components:
             self.main_dict[component] = {}
+            print(self.main_dict)
         for story in stories:
             epic_code = jira.issue(story).fields.customfield_10006
             try: # Check for approved component and version.
-                if epic_code != None and (jira.issue(epic_code).fields.components[0].name).split()[0] in self.components \
-                and (jira.issue(epic_code).fields.fixVersions[0].name).split()[-1] in self.versions:
-                    e.add(epic_code)
-                    if epic_code not in self.main_dict[(jira.issue(epic_code).fields.components[0].name).split()[0]].keys():
-                        self.main_dict[(jira.issue(epic_code).fields.components[0].name).split()[0]][epic_code] = [story]
-                    else:
-                        self.main_dict[(jira.issue(epic_code).fields.components[0].name).split()[0]][epic_code].append(story)
+                if epic_code != None:
+                    component = (jira.issue(epic_code).fields.components[0].name).split()[0]
+                    version = (jira.issue(epic_code).fields.fixVersions[0].name).split()[-1]
+                    if component in self.components and version in self.component_versions[component]:
+                        if epic_code not in self.main_dict[component].keys():
+                            self.main_dict[component][epic_code] = [story]
+                        else:
+                            self.main_dict[component][epic_code].append(story)
             except TypeError:
                 pass
             except IndexError:
@@ -67,9 +68,9 @@ class Info(object):
             self.version_sort[component] = {}
             for epic in epics: 
                 version  = (jira.issue(epic).fields.fixVersions[0].name).split()[-1]
-                if version not in versions[component].keys():
+                if version not in versions[component].keys() and version in self.component_versions[component]:
                     versions[component][version] = [epic]
-                else:
+                elif version in self.component_versions[component]:
                     versions[component][version].append(epic)
             for version in versions[component].keys():
                 epics = versions[component][version]
@@ -100,7 +101,7 @@ class Info(object):
         """ Gets the dictionary format needed for the json file. """
         end_dict = {}
         end_dict['done'] = self.done[component]
-        for version in self.versions:
+        for version in self.component_versions[component]:
             end_dict[version] = self.version_sort[component][version]
         return end_dict
             
@@ -108,11 +109,10 @@ class Info(object):
 if __name__ == "__main__":  
     file_name = 'LA_progress.json'
     x = Info()
-    x.set_components()
-    x.set_version()
+    x.set_component_versions()
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--components', help=str(x.components)) # Doesn't work properly just desplays with the help message.
-    parser.add_argument('-v', '--versions', help=str(x.versions))
+    parser.add_argument('-p', '--PC', help=str(x.component_versions['PC']))
+    parser.add_argument('-i', '--iOS', help=str(x.component_versions['iOS']))
     parser.add_argument('-f', '--file name', help=file_name)
     args = parser.parse_args()     
     x.__dic__()
@@ -120,7 +120,9 @@ if __name__ == "__main__":
     with open(file_name, 'r') as cat:
         big_dict = json.load(cat)    
     date = time.strftime("%Y/%m/%d")
-    dates_in_dict = list(big_dict[x.components[0]].keys())
+    dates_in_dict = set()
+    for component in x.components:
+        dates_in_dict = dates_in_dict | big_dict[component].keys()
     if date in dates_in_dict:
         for component in x.components:
             del big_dict[component][date]

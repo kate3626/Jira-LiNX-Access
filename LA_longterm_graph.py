@@ -10,22 +10,21 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
-pp = PdfPages('Access_Timeline.pdf')
+import time
+
 
 with open ('LA_progress.json','r') as cat:
     big_dict = json.load(cat)
-dates2 = (list(big_dict['iOS'].keys()))
-dates = sorted(dates2)
 components = list(big_dict.keys())
 
-def fixVersions():
+def fixVersions(dates):
     e = set()
     for component in components:
         for date in dates:
             e = e | (big_dict[component][date].keys())
     e.remove('done')
     return list(e)
-fix_version = fixVersions()
+
 
 class DataLists(object):
     
@@ -80,6 +79,11 @@ class DoneDate(object):
 
 
 for component in components:
+    pdf_name = component + '-' + time.strftime("%Y-%m-%d") + '.pdf'
+    pp = PdfPages(pdf_name)
+    dates2 = (list(big_dict[component].keys()))
+    dates = sorted(dates2) 
+    fix_version = fixVersions(dates)
     fig = plt.figure(figsize=(20, 10))
     fig.suptitle(component, fontsize=14, fontweight='bold')
     ax1 = fig.add_subplot(2, 1, 1)
@@ -109,4 +113,4 @@ for component in components:
     ax2.yaxis.grid()
     plt.subplots_adjust(left=0.05, bottom=0.2)
     pp.savefig()
-pp.close()
+    pp.close()
