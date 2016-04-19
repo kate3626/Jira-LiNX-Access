@@ -1,3 +1,11 @@
+"""
+Creates a graph of a the progress of LiNX Access from the json file edited in LA_longterm_json.py
+No command line arguments needed. Designed for Python 3.
+Line plot will skip over days that aren't there but will not create a line before the first date
+or after the last date. 
+Author: Kate Olsen
+Date: 19/04/2016
+"""
 import matplotlib.pyplot as plt
 import json
 import numpy as np
@@ -13,8 +21,8 @@ components = list(big_dict.keys())
 def fixVersions():
     e = set()
     for component in components:
-        e = e | (big_dict[component][dates[0]].keys())
-        e = e | (big_dict[component][dates[-1]].keys())
+        for date in dates:
+            e = e | (big_dict[component][date].keys())
     e.remove('done')
     return list(e)
 fix_version = fixVersions()
