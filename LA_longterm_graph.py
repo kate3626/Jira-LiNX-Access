@@ -26,9 +26,9 @@ def fixVersions(dates):
     return list(e)
 
 def plot_dates(dates):
-    start_date = datetime.datetime.strptime(dates[0], "%Y/%m/%d")    
-    end_date = datetime.datetime.strptime(dates[-2], "%Y/%m/%d") 
-    every_date = []
+    start_date = datetime.datetime.strptime(dates[0], "%Y/%m/%d") 
+    end_date = datetime.datetime.strptime(dates[-1], "%Y/%m/%d") 
+    every_date = [dates[0]]
     i = 1
     while i < ((end_date - start_date).days + 1):
         every_date.append((start_date  + \
@@ -49,11 +49,14 @@ class DataLists(object):
         
     def data_list_versions(self):
         self.data = []
+        print(all_dates[0])
         for date in all_dates:
             try:
+                print(date, big_dict[self.component][date][self.version])
                 self.data.append(big_dict[self.component][date][self.version])
             except KeyError:
                 self.data.append(None)
+        print(self.data)
         return self.data
     
     def line_x(self):
@@ -69,7 +72,7 @@ class DataLists(object):
     def setxlabels(self):
         self.x_labels = []
         for tick in self.xticks:
-            self.x_labels.append(str(all_dates[int(tick-0.5)]))
+            self.x_labels.append(str(all_dates[int(tick)]))
         
 
 class DoneDate(object):
@@ -109,13 +112,13 @@ class DoneDate(object):
         self.xticks = []
         self.xticks = [x + 0.5 for x in range(0, len(all_dates)-1)]
         alist = self.xticks[::5] 
-        alist.append(+ self.xticks[-1])
+        alist.append(self.xticks[-1])
         self.xticks = alist
             
     def setxlabels(self):
         self.x_labels = []
         for tick in self.xticks:
-            self.x_labels.append(str(all_dates[int(tick-0.5)]))
+            self.x_labels.append(str(all_dates[int(tick+0.5)]))
 
 
 for component in components:
