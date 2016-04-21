@@ -49,14 +49,11 @@ class DataLists(object):
         
     def data_list_versions(self):
         self.data = []
-        print(all_dates[0])
         for date in all_dates:
             try:
-                print(date, big_dict[self.component][date][self.version])
                 self.data.append(big_dict[self.component][date][self.version])
             except KeyError:
                 self.data.append(None)
-        print(self.data)
         return self.data
     
     def line_x(self):
