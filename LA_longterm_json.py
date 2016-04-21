@@ -38,14 +38,16 @@ class Info(object):
             stories.add(issue.key)
         for component in self.components:
             self.main_dict[component] = {}
-            print(self.main_dict)
         for story in stories:
             epic_code = jira.issue(story).fields.customfield_10006
             try: # Check for approved component and version.
                 if epic_code != None:
                     component = (jira.issue(epic_code).fields.components[0].name).split()[0]
                     version = (jira.issue(epic_code).fields.fixVersions[0].name).split()[-1]
+                    print(self.component_versions[component], version)
+                    print(component, self.components)
                     if component in self.components and version in self.component_versions[component]:
+                        print(epic_code)
                         if epic_code not in self.main_dict[component].keys():
                             self.main_dict[component][epic_code] = [story]
                         else:
@@ -85,9 +87,11 @@ class Info(object):
                         storystatus = jira.issue(story).fields.status.name
                         points = jira.issue(story).fields.customfield_10002
                         if points != None:
+                            print(story, 'i')
                             if storystatus == "Done" or storystatus == 'Resolved' or storystatus == 'Closed':
                                 self.done[component] += points
                                 d_num += points
+                                print(story)
                             else: 
                                 nd_num += points
                                 all_Done = False
@@ -96,6 +100,7 @@ class Info(object):
                     else:
                         num += nd_num
                 self.version_sort[component][version] = num
+        print(self.done)
     
     def json_dict(self, component):
         """ Gets the dictionary format needed for the json file. """
@@ -103,6 +108,7 @@ class Info(object):
         end_dict['done'] = self.done[component]
         for version in self.component_versions[component]:
             end_dict[version] = self.version_sort[component][version]
+        print(end_dict)
         return end_dict
             
                 
@@ -110,6 +116,7 @@ if __name__ == "__main__":
     file_name = 'LA_progress.json'
     x = Info()
     x.set_component_versions()
+    x.set_component()
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--PC', help=str(x.component_versions['PC']))
     parser.add_argument('-i', '--iOS', help=str(x.component_versions['iOS']))
@@ -128,5 +135,6 @@ if __name__ == "__main__":
             del big_dict[component][date]
     for component in x.components:
         big_dict[component][date] = x.json_dict(component)
+        print('here')
     with open(file_name, 'w') as cat:
         cat.write(json.dumps(big_dict))    
