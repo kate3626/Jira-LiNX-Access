@@ -8,6 +8,7 @@ Date: 19/04/2016
 """
 
 import time
+from datetime import datetime
 import json
 import os.path
 import sys
@@ -26,13 +27,19 @@ class Info(object):
     def set_component_versions(self):
         self.component_versions = {'PC': ['3.0', '3.0.1', '3.1'],
                                    'iOS': ['3.0', '3.0.1', '3.1']}
-    def set_component(self):
-        self.components = ['PC', 'iOS']
+    def set_component(self, alist):
+        if len(alist) == 0:
+            self.components = ['PC', 'iOS']
+        else:
+            self.components = alist
     
     def __dic__(self):
         """ Gets a dictionary of the wanted epics and the stories that are linked to them. """
         self.main_dict = {}
-        everything = jira.search_issues('project="LiNX Access" and type="Story"', maxResults = 800)
+        search_component = 'project="LiNX Access" and type="Story"'
+        if len(x.components) == 1:
+            search_component = 'project="LiNX Access" and type="Story" and component="' + str(x.components[0]) + ' Tool"'
+        everything = jira.search_issues(search_component, maxResults = 800)
         stories = set()
         for issue in everything:
             stories.add(issue.key)
@@ -57,9 +64,7 @@ class Info(object):
     def versionDoneSort(self):
         """ First organsises epics into versions. Then adds story points left to do per version/component and 
         story points done per component. """
-        self.version_sort = {}
         versions = {}
-        self.done = {}
         for component in self.components:
             epics = self.main_dict[component].keys()
             versions[component] = {}
@@ -85,7 +90,9 @@ class Info(object):
                         points = jira.issue(story).fields.customfield_10002
                         if points != None:
                             if storystatus == "Done" or storystatus == 'Resolved' or storystatus == 'Closed':
-                                self.done[component] += points
+                                story_date = jira.issue('LA-711').fields.updated.split('T')[0] 
+                                if story_date == date:
+                                    self.done[component] += points
                                 d_num += points
                             else: 
                                 nd_num += points
@@ -101,32 +108,44 @@ class Info(object):
         end_dict = {}
         end_dict['done'] = self.done[component]
         for version in self.component_versions[component]:
-            end_dict[version] = self.version_sort[component][version]
+            try:
+                end_dict[version] = self.version_sort[component][version]
+            except KeyError:
+                print('Version' , version , 'is no longer active and will', 
+                'not appear in this date.')
         return end_dict
             
                 
 if __name__ == "__main__":  
-    file_name = 'LA_progress.json'
+    date = time.strftime("%Y/%m/%d")
     x = Info()
     x.set_component_versions()
-    x.set_component()
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--PC', help=str(x.component_versions['PC']))
-    parser.add_argument('-i', '--iOS', help=str(x.component_versions['iOS']))
-    parser.add_argument('-f', '--file name', help=file_name)
-    args = parser.parse_args()     
+    parser.add_argument('-p', '--PC', help='Current versions are:' + \
+                        str(x.component_versions['PC']), action='store_true')
+    parser.add_argument('-i', '--iOS', help='Current versions are: ' + \
+                        str(x.component_versions['iOS']), action='store_true')
+    args = parser.parse_args() 
+    component_list = []
+    if args.PC:
+        component_list.append('PC')
+    if args.iOS:
+        component_list.append('iOS')
+    x.set_component(component_list)
     x.__dic__()
     x.versionDoneSort()
-    with open(file_name, 'r') as cat:
-        big_dict = json.load(cat)    
-    date = time.strftime("%Y/%m/%d")
-    dates_in_dict = set()
     for component in x.components:
-        dates_in_dict = dates_in_dict | big_dict[component].keys()
-    if date in dates_in_dict:
-        for component in x.components:
-            del big_dict[component][date]
-    for component in x.components:
-        big_dict[component][date] = x.json_dict(component)
-    with open(file_name, 'w') as cat:
-        cat.write(json.dumps(big_dict))    
+        file_name = 'LA-' + component + '.json'
+        if os.path.isfile(file_name):
+            with open(file_name, 'r') as cat:
+                big_dict = json.load(cat)    
+            dates_in_dict = set()
+            dates_in_dict = dates_in_dict | big_dict.keys()
+            if date in dates_in_dict:
+                del big_dict[date]
+        else:
+            big_dict = {}
+            print('Json file cannot be found so one was created. Json file is', file_name)
+        big_dict[date] = x.json_dict(component)
+        with open(file_name, 'w') as cat:
+            cat.write(json.dumps(big_dict))    
