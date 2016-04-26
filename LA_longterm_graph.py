@@ -16,12 +16,22 @@ from collections import deque
 import argparse
 
 
-def fixVersions(dates):
-    e = set()
-    for date in dates:
-        e = e | (big_dict[date].keys())
-    e.remove('done')
-    return list(e)
+def fixVersions(dates, vlist, component):
+    own_versions = False
+    if len(vlist) != 0:
+        version_list = []
+        for version in vlist:
+            if version[0].lower() == component:
+                own_versions = True
+                version_list.append(version[1:])
+        if own_versions:
+            return version_list
+    if not own_versions: 
+        e = set()
+        for date in dates:
+            e = e | (big_dict[date].keys())
+        e.remove('done')
+        return list(e)
 
 def plot_dates(dates):
     start_date = datetime.datetime.strptime(dates[0], "%Y/%m/%d") 
@@ -116,17 +126,20 @@ class DoneDate(object):
             self.mov_avg.append(sum(nums)/len(nums))
             
             
-            
-            
-            
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--PC', help='Json file is: LA-PC.json', 
+    parser.add_argument('-p', '--PC', help='Json file is: LA-PC.json\n' + \
+                        'To choose versions write "p" then version number, eg, p3.0.' + \
+                        '\n-p and/or -i needs to come before the version list.', 
                         action='store_true')
-    parser.add_argument('-i', '--iOS', help='Json file is: LA-iOS.json', 
+    parser.add_argument('-i', '--iOS', help='Json file is: LA-iOS.json\n' + \
+                        'To choose versions write "i" then version number, eg, i3.0.' + \
+                        '\n-p and/or -i needs to come before the version list.', 
                         action='store_true')
+    parser.add_argument('args', nargs=argparse.REMAINDER)
     args = parser.parse_args() 
     filenames = []
+    print(args.args)
     if args.PC:
         filenames.append('LA-PC.json')
     if args.iOS:
@@ -141,7 +154,7 @@ if __name__ == "__main__":
         dates2 = (list(big_dict.keys()))
         dates = sorted(dates2)
         all_dates = plot_dates(dates)
-        fix_version = fixVersions(dates)
+        fix_version = fixVersions(dates, args.args, filenames[i].split('-')[1].split('.')[0][0].lower())
         fig = plt.figure(figsize=(20, 10))
         fig.suptitle(filenames[i].split('-')[1].split('.')[0], fontsize=14, fontweight='bold')
         ax1 = fig.add_subplot(2, 1, 1)

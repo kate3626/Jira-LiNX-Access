@@ -36,10 +36,7 @@ class Info(object):
     def __dic__(self):
         """ Gets a dictionary of the wanted epics and the stories that are linked to them. """
         self.main_dict = {}
-        search_component = 'project="LiNX Access" and type="Story"'
-        if len(x.components) == 1:
-            search_component = 'project="LiNX Access" and type="Story" and component="' + str(x.components[0]) + ' Tool"'
-        everything = jira.search_issues(search_component, maxResults = 800)
+        everything = jira.search_issues('project="LiNX Access" and type="Story"', maxResults = 800)
         stories = set()
         for issue in everything:
             stories.add(issue.key)
@@ -88,10 +85,10 @@ class Info(object):
                     for story in stories:
                         storystatus = jira.issue(story).fields.status.name
                         points = jira.issue(story).fields.customfield_10002
-                        if points != None:
+                        if points != None:                           
                             if storystatus == "Done" or storystatus == 'Resolved' or storystatus == 'Closed':
-                                story_date = jira.issue('LA-711').fields.updated.split('T')[0] 
-                                if story_date == date:
+                                story_date = (jira.issue(story).fields.updated.split('T')[0]).replace('-', '/') 
+                                if story_date == date:                                                                
                                     self.done[component] += points
                                 d_num += points
                             else: 
