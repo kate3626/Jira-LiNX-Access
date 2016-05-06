@@ -130,11 +130,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--PC', help='Json file is: LA-PC.json\n' + \
                         'To choose versions write "p" then version number, eg, p3.0.' + \
-                        '\n-p and/or -i needs to come before the version list.', 
+                        '\n-p, -i, etc needs to come before the version list.', 
                         action='store_true')
     parser.add_argument('-i', '--iOS', help='Json file is: LA-iOS.json\n' + \
                         'To choose versions write "i" then version number, eg, i3.0.' + \
-                        '\n-p and/or -i needs to come before the version list.', 
+                        '\n-p, -i, etc needs to come before the version list.', 
+                        action='store_true')
+    parser.add_argument('-l', '--Laser_Qucamole', help='Json file is: LA-iOS.json\n' + \
+                        'To choose versions write "l" then version number, eg, i3.0.' + \
+                        '\n-p, -i, etc needs to come before the version list.', 
+                        action='store_true')
+    parser.add_argument('-c', '--Copy_Paste', help='Json file is: LA-iOS.json\n' + \
+                        'To choose versions write "c" then version number, eg, i3.0.' + \
+                        '\n-p, -i, etc needs to come before the version list.', 
+                        action='store_true')
+    parser.add_argument('-d', '--Dragon', help='Json file is: LA-iOS.json\n' + \
+                        'To choose versions write "d" then version number, eg, i3.0.' + \
+                        '\n-p, -i, etc needs to come before the version list.', 
                         action='store_true')
     parser.add_argument('args', nargs=argparse.REMAINDER)
     args = parser.parse_args() 
@@ -144,8 +156,14 @@ if __name__ == "__main__":
         filenames.append('LA-PC.json')
     if args.iOS:
         filenames.append('LA-iOS.json') 
+    if args.Copy_Paste:
+        filenames.append('SW-Team.json') 
+    if args.Dragon:
+        filenames.append('SW-Dragon.json') 
+    if args.Laser_Qucamole:
+        filenames.append('SW-Laser.json') 
     if len(filenames) == 0:
-        filenames = ['LA-iOS.json', 'LA-PC.json']
+        filenames = ['LA-iOS.json', 'LA-PC.json', 'SW-Team.json', 'SW-Dragon.json', 'SW-Laser.json']
     for i in range(0, len(filenames)):
         with open (filenames[i],'r') as cat:
             big_dict = json.load(cat)

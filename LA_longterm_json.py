@@ -26,17 +26,22 @@ class Info(object):
         
     def set_component_versions(self):
         self.component_versions = {'PC': ['3.0', '3.0.1', '3.1'],
-                                   'iOS': ['3.0', '3.0.1', '3.1']}
+                                   'iOS': ['3.0', '3.0.1', '3.1'],
+                                   'Laser': ['MR4-RC1'],
+                                   'Team': ['MR4-RC1'],
+                                   'Dragon': ['MR4-RC1']}
     def set_component(self, alist):
         if len(alist) == 0:
-            self.components = ['PC', 'iOS']
+            self.components = ['PC', 'iOS', 'Laser', 'Team', 'Dragon']
         else:
             self.components = alist
     
     def __dic__(self):
         """ Gets a dictionary of the wanted epics and the stories that are linked to them. """
         self.main_dict = {}
-        everything = jira.search_issues('project="LiNX Access" and type="Story"', maxResults = 800)
+        everything = jira.search_issues('(project="LiNX Access" or project="LiNX App SW : Laser Guacamole"' + \
+                                    ' or project="LiNX App SW : Team Copy-Paste"' + \
+                                    ' or project="LiNX App SW: Dragon") and type="Story"', maxResults = 800)
         stories = set()
         for issue in everything:
             stories.add(issue.key)
@@ -46,8 +51,11 @@ class Info(object):
             epic_code = jira.issue(story).fields.customfield_10006
             try: # Check for approved component and version.
                 if epic_code != None:
-                    component = (jira.issue(epic_code).fields.components[0].name).split()[0]
                     version = (jira.issue(epic_code).fields.fixVersions[0].name).split()[-1]
+                    if jira.issue(epic_code).fields.project.name == 'LiNX Access':
+                        component = (jira.issue(epic_code).fields.components[0].name).split()[0]
+                    else:
+                        component = (jira.issue(epic_code).fields.project.name).split(':')[1].split()[0]
                     if component in self.components and version in self.component_versions[component]:
                         if epic_code not in self.main_dict[component].keys():
                             self.main_dict[component][epic_code] = [story]
@@ -122,17 +130,32 @@ if __name__ == "__main__":
                         str(x.component_versions['PC']), action='store_true')
     parser.add_argument('-i', '--iOS', help='Current versions are: ' + \
                         str(x.component_versions['iOS']), action='store_true')
+    parser.add_argument('-l', '--Laser_Guacamole', help='Current versions are: ' + \
+                        str(x.component_versions['Laser']), action='store_true') 
+    parser.add_argument('-c', '--Copy_Paste', help='Current versions are: ' + \
+                        str(x.component_versions['Team']), action='store_true')   
+    parser.add_argument('-d', '--Dragon', help='Current versions are: ' + \
+                        str(x.component_versions['Dragon']), action='store_true')         
     args = parser.parse_args() 
     component_list = []
     if args.PC:
         component_list.append('PC')
     if args.iOS:
         component_list.append('iOS')
+    if args.Laser_Guacamole:
+        component_list.append('Laser')    
+    if args.Copy_Paste:
+        component_list.append('Team')
+    if args.Dragon:
+        component_list.append('Dragon')
     x.set_component(component_list)
     x.__dic__()
     x.versionDoneSort()
     for component in x.components:
-        file_name = 'LA-' + component + '.json'
+        if component == 'PC' or component =='iOS':
+            file_name = 'LA-' + component + '.json'
+        else:
+            file_name = 'SW-' + component + '.json'
         if os.path.isfile(file_name):
             with open(file_name, 'r') as cat:
                 big_dict = json.load(cat)    
