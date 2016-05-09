@@ -118,40 +118,37 @@ class DoneDate(object):
         for tick in self.xticks:
             self.x_labels.append(str(all_dates[int(tick-0.5)]))
     
-    def moving_average(self):
+    def moving_average(self, extra_args):
+        ma_len = 60
+        for arg in extra_args:
+            if arg.startswith('ma'):
+                ma_len = int(arg.split('ma')[1])
         self.mov_avg = []
-        nums = deque(maxlen=60) #change length of moving average here
+        nums = deque(maxlen=ma_len) #change length of moving average here
         for i in range(0, len(all_dates)):
             nums.append(self.data[i])
             self.mov_avg.append(sum(nums)/len(nums))
             
             
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--PC', help='Json file is: LA-PC.json\n' + \
-                        'To choose versions write "p" then version number, eg, p3.0.' + \
-                        '\n-p, -i, etc needs to come before the version list.', 
+    parser = argparse.ArgumentParser(description='The following options have to be written after all the ' + \
+                                     'files have been chosen. To choose versions write the command line' + \
+                                     'argument and then the version e.g. "i3.1" for iOS and version 3.1. ' + \
+                                     'To choose the moving average time length type "ma" and then the number' + \
+                                     'of days wanted e.g. "ma60". 60 Days is the default.')
+    parser.add_argument('-p', '--PC', help='Json file is: LA-PC.json\n', 
                         action='store_true')
-    parser.add_argument('-i', '--iOS', help='Json file is: LA-iOS.json\n' + \
-                        'To choose versions write "i" then version number, eg, i3.0.' + \
-                        '\n-p, -i, etc needs to come before the version list.', 
+    parser.add_argument('-i', '--iOS', help='Json file is: LA-iOS.json\n', 
                         action='store_true')
-    parser.add_argument('-l', '--Laser_Qucamole', help='Json file is: LA-iOS.json\n' + \
-                        'To choose versions write "l" then version number, eg, i3.0.' + \
-                        '\n-p, -i, etc needs to come before the version list.', 
+    parser.add_argument('-l', '--Laser_Qucamole', help='Json file is: SW-Laser.json\n', 
                         action='store_true')
-    parser.add_argument('-c', '--Copy_Paste', help='Json file is: LA-iOS.json\n' + \
-                        'To choose versions write "c" then version number, eg, i3.0.' + \
-                        '\n-p, -i, etc needs to come before the version list.', 
+    parser.add_argument('-c', '--Copy_Paste', help='Json file is: SW-Team.json\n', 
                         action='store_true')
-    parser.add_argument('-d', '--Dragon', help='Json file is: LA-iOS.json\n' + \
-                        'To choose versions write "d" then version number, eg, i3.0.' + \
-                        '\n-p, -i, etc needs to come before the version list.', 
+    parser.add_argument('-d', '--Dragon', help='Json file is: SW-Dragon.json\n', 
                         action='store_true')
     parser.add_argument('args', nargs=argparse.REMAINDER)
     args = parser.parse_args() 
     filenames = []
-    print(args.args)
     if args.PC:
         filenames.append('LA-PC.json')
     if args.iOS:
@@ -199,7 +196,7 @@ if __name__ == "__main__":
         g.bar_x()
         g.setxticks()
         g.setxlabels()
-        g.moving_average()
+        g.moving_average(args.args)
         ax2.hist(g.x_bar, len(g.data) - 1, weights=g.data)
         ax2.plot([x + 0.5 for x in range(0, len(all_dates))], g.mov_avg, linewidth=2.0)
         ax2.set_xticks(g.xticks)    
